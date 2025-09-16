@@ -1,9 +1,25 @@
 import argparse
 import requests
+import time
+from functools import wraps
 
 COINBASE_API_URL = 'https://api.exchange.coinbase.com/products/BTC-USD/book?level=2'
 GEMINI_API_URL = 'https://api.gemini.com/v1/book/BTCUSD'
 
+def rate_limiter(interval=2.0):
+    def decorator(func):
+        last_called = [0.0]  # closure state
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            now = time.monotonic()
+            if now - last_called[0] < interval:
+                raise RuntimeError(f"Error: rate limit for {func.__name__} function is {interval} seconds")
+            last_called[0] = now
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+
+@rate_limiter(2.0)
 def fetch_coinbase():
     response = requests.get(COINBASE_API_URL)
     response.raise_for_status()
@@ -12,6 +28,7 @@ def fetch_coinbase():
     asks = [[float(price), float(size)] for price, size, _ in data["asks"]]
     return bids, asks
 
+@rate_limiter(2.0)
 def fetch_gemini():
     response = requests.get(GEMINI_API_URL)
     response.raise_for_status()
