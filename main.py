@@ -1,6 +1,6 @@
+import argparse
 import requests
 
-BTC_AMOUNT = 10
 COINBASE_API_URL = 'https://api.exchange.coinbase.com/products/BTC-USD/book?level=2'
 GEMINI_API_URL = 'https://api.gemini.com/v1/book/BTCUSD'
 
@@ -26,9 +26,11 @@ def merge_sorted(a, b, reverse=False):
 
     while i < len(a) and j < len(b):
         if (a[i][0] >= b[j][0]) if reverse else (a[i][0] <= b[j][0]):
-            merged.append(a[i]); i += 1
+            merged.append(a[i])
+            i += 1
         else:
-            merged.append(b[j]); j += 1
+            merged.append(b[j])
+            j += 1
 
     merged.extend(a[i:])
     merged.extend(b[j:])
@@ -53,17 +55,21 @@ def execute(orderbook, qty, side):
     return total
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--qty", type=float, default=10.0)
+    btc_amount = parser.parse_args().qty
+
     coinbase_bids, coinbase_asks = fetch_coinbase()
     gemini_bids, gemini_asks = fetch_gemini()
 
     bids = merge_sorted(coinbase_bids, gemini_bids, reverse=True)
     asks = merge_sorted(coinbase_asks, gemini_asks, reverse=False)
 
-    buy_cost = execute(asks, BTC_AMOUNT, "buy")
-    sell_revenue = execute(bids, BTC_AMOUNT, "sell")
+    buy_cost = execute(asks, btc_amount, "buy")
+    sell_revenue = execute(bids, btc_amount, "sell")
 
-    print(f"To buy {BTC_AMOUNT} BTC: ${buy_cost:,.2f}")
-    print(f"To sell {BTC_AMOUNT} BTC: ${sell_revenue:,.2f}")
+    print(f"To buy {btc_amount} BTC: ${buy_cost:,.2f}")
+    print(f"To sell {btc_amount} BTC: ${sell_revenue:,.2f}")
 
 if __name__ == "__main__":
     main()
