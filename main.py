@@ -8,7 +8,7 @@ GEMINI_API_URL = 'https://api.gemini.com/v1/book/BTCUSD'
 
 def rate_limiter(interval=2.0):
     def decorator(func):
-        last_called = [0.0]  # closure state
+        last_called = [0.0]
         @wraps(func)
         def wrapper(*args, **kwargs):
             now = time.monotonic()
@@ -37,6 +37,7 @@ def fetch_gemini():
     asks = [[float(ask["price"]), float(ask["amount"])] for ask in data["asks"]]
     return bids, asks
 
+# since data from api is already sorted, we don't have to sort it again. instead we check current value for each array and keep going until all values are checked. it reduces time complexity from O(n log n) because of sorting to O(n)
 def merge_sorted(a, b, reverse=False):
     i = j = 0
     merged = []
